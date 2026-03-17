@@ -1,0 +1,35 @@
+import streamlit as st
+import requests
+
+def check_image_ci():
+    url = 'http://127.0.0.1:8000//predict3/'
+
+    st.title('CIFAR_MNIST')
+    st.write('Загрузите изображение, и модель попробует его распознать')
+
+    upload_file = st.file_uploader('Выберите изображение',
+                                   type=["png", "jpg", "jpeg"])
+
+    if upload_file is not None:
+        st.image(upload_file, caption='Загруженное изображение')
+
+        if st.button('Проверка'):
+            try:
+                files = {
+                    'file': (upload_file.name, upload_file.getvalue(), upload_file.type)
+                }
+
+                response = requests.post(url, files=files, timeout=10)
+
+                if response.status_code == 200:
+                    result = response.json()
+                    pred = result.get('Answer')
+                    st.success(f'Модель думает, что это: {pred}')
+                else:
+                    st.error(f'Ошибка сервера: {response.status_code}')
+                    st.write(response.text)
+
+            except requests.exceptions.ConnectionError:
+                st.error('FastAPI сервер не запущен')
+            except Exception as e:
+                st.error(f'Ошибка: {e}')
